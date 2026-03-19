@@ -1,0 +1,48 @@
+services:
+  app-java: 
+    image: hienquang/duanjava:v1
+    ports:
+      - "8080:8080"
+    depends_on:
+      db-mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db-mysql:3306/demo_docker_db?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      
+  db-mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: demo_docker_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db-mysql
+      MYSQL_ROOT_PASSWORD: root
+    depends_on:
+      - db-mysql
+
+  frontend-nginx:
+    image: hienquang/duanfrontend:v1
+    ports:
+      - "80:80" 
+    depends_on:
+      - app-java
+
+
+volumes:
+  db_data:
